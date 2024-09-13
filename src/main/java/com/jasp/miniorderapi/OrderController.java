@@ -1,64 +1,48 @@
 package com.jasp.miniorderapi;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
-import java.util.Optional;
 
 @Controller
-@RequestMapping("/order")
+@RequiredArgsConstructor
 public class OrderController {
 
-
-    private final OrderRepository orderRepository;
-
-    public OrderController(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
+    private final OrderService orderService;
 
     // GET /order - 모든 주문 조회
-    @GetMapping
+    @GetMapping("/order")
     @ResponseBody
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public ResponseEntity<?> read() {
+        List<Order> result = orderService.getAllOrder();
+        return ResponseEntity.ok().body(result);
     }
 
     // POST /order - 새로운 주문 생성
-    @PostMapping
     @ResponseBody
-    public Order createOrder(@RequestBody Order order) {
-        order.setOrderDate(LocalDateTime.now());
-        return orderRepository.save(order);
+    @PostMapping("/order/save")
+    public ResponseEntity<?> save(@RequestBody Order order) {
+        orderService.save(order);
+        return ResponseEntity.ok().build();
     }
 
     // PUT /order/{orderId} - 주문 수정
     @PutMapping("/{orderId}")
     @ResponseBody
-    public ResponseEntity<Order> updateOrder(@PathVariable Long orderId, @RequestBody Order updatedOrder) {
-        Optional<Order> existingOrder = orderRepository.findById(orderId);
-        if (existingOrder.isPresent()) {
-            Order order = existingOrder.get();
-            order.setCategory(updatedOrder.getCategory());
-            order.setAmount(updatedOrder.getAmount());
-            return ResponseEntity.ok(orderRepository.save(order));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<?> update(@PathVariable Long orderId, @RequestBody Order order) {
+        orderService.update(orderId, order);
+        return ResponseEntity.ok().build();
     }
 
     // DELETE /order/{orderId} - 주문 삭제
     @DeleteMapping("/{orderId}")
     @ResponseBody
     public ResponseEntity<Void> deleteOrder(@PathVariable Long orderId) {
-        if (orderRepository.existsById(orderId)) {
-            orderRepository.deleteById(orderId);
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        orderService.remove(orderId);
+        return ResponseEntity.ok().build();
     }
 }
